@@ -4,8 +4,15 @@ use axum::{
     Router,
 };
 use clap::{Parser, Subcommand, ValueEnum};
-use sqlx::{types::chrono, PgPool};
+use sqlx::{PgPool, FromRow};
 use std::net::SocketAddr;
+
+#[derive(FromRow)]
+struct NameRecord {
+    name: String,
+    count: i32,
+    last_seen: chrono::DateTime<chrono::Utc>,
+}
 
 #[derive(Parser)]
 #[command(name = "blort")]
@@ -51,7 +58,7 @@ async fn hello_name(Path(name): Path<String>, State(db): State<PgPool>) -> Resul
     let existing = sqlx::query!("SELECT count, last_seen FROM items WHERE name = $1", name)
         .fetch_optional(&db)
         .await
-        .map_err(|e| format!("Database error: {}", e))?;
+        .map_err(|e| format!("Database error: {e}"))?;
 
     let (previous_count, last_seen) = match existing {
         Some(record) => (record.count, Some(record.last_seen)),
@@ -68,15 +75,12 @@ async fn hello_name(Path(name): Path<String>, State(db): State<PgPool>) -> Resul
     )
     .execute(&db)
     .await
-    .map_err(|e| format!("Database error: {}", e))?;
+    .map_err(|e| format!("Database error: {e}"))?;
 
     let response = if let Some(last_seen) = last_seen {
-        format!(
-            "Hello {}! You've been called {} times previously. Last seen: {}",
-            name, previous_count, last_seen
-        )
+        format!("Hello {name}! You've been called {previous_count} times previously. Last seen: {last_seen}")
     } else {
-        format!("Hello {}! This is your first visit!", name)
+        format!("Hello {name}! This is your first visit!")
     };
 
     Ok(response)
@@ -95,7 +99,7 @@ async fn run_server(db: PgPool) -> Result<(), Box<dyn std::error::Error>> {
         .expect("PORT must be a valid number");
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    println!("Server running on http://{}", addr);
+    println!("Server running on http://{addr}");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, router).await?;
@@ -119,14 +123,16 @@ async fn show_names(
         OrderBy::Visits => "visits",
     };
 
-    let rows = match order {
+    let rows: Vec<NameRecord> = match order {
         OrderBy::LastSeen => {
-            sqlx::query!("SELECT name, count, last_seen FROM items ORDER BY last_seen DESC LIMIT $1", limit as i32)
+            sqlx::query_as("SELECT name, count, last_seen FROM items ORDER BY last_seen DESC LIMIT $1")
+                .bind(limit as i32)
                 .fetch_all(db)
                 .await?
         }
         OrderBy::Visits => {
-            sqlx::query!("SELECT name, count, last_seen FROM items ORDER BY count DESC LIMIT $1", limit as i32)
+            sqlx::query_as("SELECT name, count, last_seen FROM items ORDER BY count DESC LIMIT $1")
+                .bind(limit as i32)
                 .fetch_all(db)
                 .await?
         }
@@ -137,8 +143,8 @@ async fn show_names(
         return Ok(());
     }
 
-    println!("Top {} names (sorted by {}):", limit, sort_label);
-    println!("{:<20} {:<8} {}", "Name", "Visits", "Last Seen");
+    println!("Top {limit} names (sorted by {sort_label}):");
+    println!("{:<20} {:<8} Last Seen", "Name", "Visits");
     println!("{}", "-".repeat(50));
 
     for row in rows {

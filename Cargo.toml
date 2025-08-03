@@ -9,3 +9,4 @@ sqlx = { version = "0.8.6", features = ["chrono", "uuid", "tls-rustls", "postgre
 tokio = { version = "1.28.2", features = ["full"] }
 dotenvy = "0.15"
 clap = { version = "4.0", features = ["derive"] }
+chrono = "0.4"
