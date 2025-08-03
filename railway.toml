@@ -5,5 +5,7 @@ builder = "railpack"
 startCommand = "blort run"
 healthcheckPath = "/ok"
 healthcheckTimeout = 100
-
+sleepApplication = true
+minInstances = 0
+waitForCI = true
 
