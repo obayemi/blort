@@ -2,7 +2,7 @@
 builder = "railpack"
 
 [deploy]
-startCommand = "blort run"
+startCommand = "./bin/blort run"
 healthcheckPath = "/ok"
 healthcheckTimeout = 100
 sleepApplication = true
