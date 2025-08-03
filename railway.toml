@@ -1,0 +1,9 @@
+[build]
+builder = "railpack"
+
+[deploy]
+startCommand = "blort run"
+healthcheckPath = "/ok"
+healthcheckTimeout = 100
+
+

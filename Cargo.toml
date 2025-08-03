@@ -8,3 +8,4 @@ axum = "0.8"
 sqlx = { version = "0.8.6", features = ["chrono", "uuid", "tls-rustls", "postgres", "runtime-tokio", "macros", "migrate"] }
 tokio = { version = "1.28.2", features = ["full"] }
 dotenvy = "0.15"
+clap = { version = "4.0", features = ["derive"] }
