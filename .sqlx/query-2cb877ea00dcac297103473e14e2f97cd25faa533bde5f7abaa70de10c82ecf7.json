@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO items (name, count, last_seen) VALUES ($1, 1, NOW())\n         ON CONFLICT (name) DO UPDATE SET \n         count = items.count + 1, \n         last_seen = NOW()",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2cb877ea00dcac297103473e14e2f97cd25faa533bde5f7abaa70de10c82ecf7"
+}
